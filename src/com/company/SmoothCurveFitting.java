@@ -6,7 +6,7 @@ public class SmoothCurveFitting {
     int numberOfPoints;
     int degree;
     int turn = 0;
-    int totalTurn = 200;
+    int totalTurn = 500;
     final double Pc = 0.7;
     final double Pm = 0.01;
     int b = 1;
@@ -44,7 +44,7 @@ public class SmoothCurveFitting {
         return -1;
     }
 
-    public int factorialOf(int n) {
+    public long factorialOf(long n) {
         if (n <= 2) {
             return n;
         }
@@ -60,21 +60,28 @@ public class SmoothCurveFitting {
     }
 
     public int getPopulationSize() {
-        int N = numberOfPoints;
+        int N = numberOfPoints*4;
         int result = (int) (factorialOf(numberOfPoints) * 0.000002);
         if (result > N) N = (result % 2 == 0 ? result : result + 1);
-
         return N;
     }
 
     public Double getFitness(ArrayList<Double> chromosome) {
+        /*Error at (1,5) = ((1.33 + 0.12 * 1 + 4.09 * 1^2) – 5)^2 = 0.2916
+        Error at (2,8) = ((1.33 + 0.12 * 2 + 4.09 * 2^2) – 8)^2 = 98.6049
+        Error at (3,13) = ((1.33 + 0.12 * 3 + 4.09 * 3^2) – 13)^2 = 650.25
+        Error at (4,20) = ((1.33 + 0.12 * 4 + 4.09 * 4^2) – 20)^2 = 2232.5625
+        Total error = (9.67 + 5.15 + 20.88 + 303.1) / 4 = 84.7*/
         Double totalValue = 0.0;
         for(int i = 0; i < numberOfPoints; i++){
             Double sum = 0.0;
             for (int j = 0; j < chromosome.size(); j++) {
                 sum += (chromosome.get(j) * Math.pow(points.get(i).key, j));
+                //System.out.println((chromosome.get(j) * Math.pow(points.get(i).key, j)));
             }
+            //System.out.println(Math.pow((sum - points.get(i).value),2));
             totalValue += Math.pow((sum - points.get(i).value),2);
+
         }
 
         return totalValue / numberOfPoints;
@@ -82,29 +89,31 @@ public class SmoothCurveFitting {
 
     public void DoSelection() {
         TreeSet<Integer> temp = new TreeSet<Integer>();
+        Vector<pair<ArrayList<Double>, Double>> indexs = new Vector<>();
         for(int i = 0; i < population.size(); i++){
             while (temp.size() != 3){
                 temp.add((int) (Math.random() * (population.size()-1)));
             }
-            selectedChromosomes.add(getMax(temp));
+            while (temp.size() != 0){
+                int location = temp.pollFirst();
+                indexs.add(new pair<>(fitnessValues.get(location).key, fitnessValues.get(location).value));
+            }
+            selectedChromosomes.add(getMax(indexs).key);
         }
     }
 
-    public ArrayList<Double> getMax(TreeSet<Integer> temp) {
-        ArrayList<Double> bestChromosome = new ArrayList<>();
-        int index = temp.pollFirst();
-        bestChromosome = fitnessValues.get(index).key;
+    public pair<ArrayList<Double>,Double> getMax(Vector<pair<ArrayList<Double>, Double>> array) {
+        ArrayList<Double> bestChromosome = array.get(0).key;
+        Double fitnessValue = array.get(0).value;
 
-        Iterator value = temp.iterator();
-        while (value.hasNext()){
-            int x = (int)value.next();
-            if(fitnessValues.get(index).value > fitnessValues.get(x).value){
-                index = x;
-                bestChromosome = fitnessValues.get(index).key;
+        for (int i = 1; i < array.size(); i++){
+            if(fitnessValue > array.get(i).value ){
+                fitnessValue = array.get(i).value;
+                bestChromosome = array.get(i).key;
             }
         }
 
-        return bestChromosome;
+        return new pair<>(bestChromosome,fitnessValue);
     }
 
     public void DoCrossover(ArrayList<Double> chromosome1, ArrayList<Double> chromosome2) {
@@ -115,6 +124,8 @@ public class SmoothCurveFitting {
 
         double r1 = rand.nextDouble();
         if (r1 <= Pc) {
+            offspring1 = new ArrayList<>();
+            offspring2 = new ArrayList<>();
             int r2 = -1,r3 = -1;
             while ( r2 == r3){
                 r2 = (int) Math.floor(Math.random() * ((chromosomeLength - 1)) + 1);
@@ -139,8 +150,8 @@ public class SmoothCurveFitting {
                 offspring2.add(chromosome2.get(i));
             }
         }
-        offSprings.add(new pair<>(offspring1, getFitness(offspring1)));
-        offSprings.add(new pair<>(offspring2, getFitness(offspring2)));
+        offSprings.add(new pair<>(offspring1, 1.0));
+        offSprings.add(new pair<>(offspring2, 1.0));
     }
 
     public void DoMutation() {
@@ -166,6 +177,7 @@ public class SmoothCurveFitting {
                     offSpring.key.set(j ,xOld + change);
                 }
             }
+            offSpring.value = getFitness(offSpring.key);
         }
     }
 
@@ -174,13 +186,13 @@ public class SmoothCurveFitting {
         fitnessValues.clear();
         for (pair<ArrayList<Double>, Double> offSpring : offSprings) {
             population.add(offSpring.key);
-            fitnessValues.add(new pair<>(offSpring.key, getFitness(offSpring.key)));
+            fitnessValues.add(new pair<>(offSpring.key, offSpring.value));
         }
         offSprings.clear();
         selectedChromosomes.clear();
     }
 
-    public void performGA(int caseNumber) {
+    public void performGA() {
         int popSize = getPopulationSize();
         while (population.size() < popSize) {
             ArrayList<Double> chromosome = generateChromosome();
@@ -188,7 +200,7 @@ public class SmoothCurveFitting {
             Double fitness = getFitness(chromosome);
             fitnessValues.add(new pair<>(chromosome, fitness));
         }
-        ArrayList<Double> bestChromosome = new ArrayList<>();
+        pair<ArrayList<Double>,Double> bestChromosome = new pair<>(new ArrayList<>(),1000000000000000.0);
         while (turn < totalTurn) {
             DoSelection();
             for (int i = 0; i < selectedChromosomes.size(); i += 2) {
@@ -196,25 +208,18 @@ public class SmoothCurveFitting {
             }
             DoMutation();
             DoReplacement();
-            //bestChromosome = (getFitness(bestChromosome) > getFitness(getMax()) ? bestChromosome : getMax());
+            pair<ArrayList<Double>,Double> temp = getMax(fitnessValues);
+            bestChromosome = (bestChromosome.value < temp.value ? bestChromosome : temp);
             turn++;
         }
-       // print(bestChromosome, caseNumber);
+        print(bestChromosome);
     }
 
-   /* public void print(ArrayList<Double> bestChromosome, int caseNumber) {
-        StringBuilder output = new StringBuilder();
-        int numberOfItems = 0;
-        for (int i = 0; i < bestChromosome.length(); i++) {
-            if (bestChromosome.charAt(i) == '1') {
-                numberOfItems++;
-                output.append(points.get(i).key).append(" ").append(points.get(i).value).append('\n');
-            }
+    public void print(pair<ArrayList<Double>,Double> bestChromosome) {
+        for(Double coefficient : bestChromosome.key){
+            System.out.print(coefficient + " , ");
         }
-        //System.out.println("Weight = " + getWeight(bestChromosome));
-        System.out.println("Case " + caseNumber + ": " + getFitness(bestChromosome));
-        System.out.println(numberOfItems);
-        System.out.println(output);
-    }*/
+        System.out.println("Error = " + bestChromosome.value);
+    }
 
 }

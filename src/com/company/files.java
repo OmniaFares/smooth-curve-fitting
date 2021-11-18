@@ -13,7 +13,7 @@ public class files {
     SmoothCurveFitting testcase;
 
     public void read() throws FileNotFoundException {
-        File inputFile = new File("input test case.txt");
+        File inputFile = new File("input-2.txt");
         Scanner reader = new Scanner(inputFile);
         numberOfTestcases = reader.nextInt();
         for (int i = 0; i < numberOfTestcases; i++) {
@@ -24,7 +24,7 @@ public class files {
             }
 
             testcase = new SmoothCurveFitting(numberOfPoints, degree, pairs);
-            testcase.performGA(i + 1);
+            testcase.performGA();
             pairs.clear();
         }
         reader.close();

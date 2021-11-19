@@ -6,12 +6,12 @@ public class SmoothCurveFitting {
     int numberOfPoints;
     int degree;
     int turn = 0;
-    int totalTurn = 100;
+    int totalTurn = 200;
     final double Er = 0.2;
     final double Pc = 0.7;
-    final double Pm = 0.01;
+    final double Pm = 0.1;
     int numberOfBest;
-    int b = 1;
+    int b = 5;
     Random rand;
     Vector<pair<Double, Double>> points;
     Vector<pair<ArrayList<Double>, Double>> fitnessValues;
@@ -29,29 +29,6 @@ public class SmoothCurveFitting {
         offSprings = new Vector<>();
     }
 
-    public int binarySearch(Vector<Integer> cumulative, int l, int r, int x) {
-        if (r >= l) {
-            int mid = l + (r - l) / 2;
-
-            if (cumulative.get(mid + 1) > x && cumulative.get(mid) <= x)
-                return mid;
-
-            if (cumulative.get(mid) > x)
-                return binarySearch(cumulative, l, mid - 1, x);
-
-            return binarySearch(cumulative, mid + 1, r, x);
-        }
-
-        return -1;
-    }
-
-    public long factorialOf(long n) {
-        if (n <= 2) {
-            return n;
-        }
-        return n * factorialOf(n - 1);
-    }
-
     public ArrayList<Double> generateChromosome() {
         ArrayList<Double> chromosome = new ArrayList<Double>();
         for (int i = 0; i < degree+1; i++) {
@@ -61,30 +38,19 @@ public class SmoothCurveFitting {
     }
 
     public int getPopulationSize() {
-        int N = numberOfPoints*5;
-        int result = (int) (factorialOf(numberOfPoints) * 0.000002);
-        if (result > N) N = (result % 2 == 0 ? result : result + 1);
+        int N = numberOfPoints*7;
         return N;
     }
 
     public Double getFitness(ArrayList<Double> chromosome) {
-        /*Error at (1,5) = ((1.33 + 0.12 * 1 + 4.09 * 1^2) – 5)^2 = 0.2916
-        Error at (2,8) = ((1.33 + 0.12 * 2 + 4.09 * 2^2) – 8)^2 = 98.6049
-        Error at (3,13) = ((1.33 + 0.12 * 3 + 4.09 * 3^2) – 13)^2 = 650.25
-        Error at (4,20) = ((1.33 + 0.12 * 4 + 4.09 * 4^2) – 20)^2 = 2232.5625
-        Total error = (9.67 + 5.15 + 20.88 + 303.1) / 4 = 84.7*/
         Double totalValue = 0.0;
         for(int i = 0; i < numberOfPoints; i++){
             Double sum = 0.0;
             for (int j = 0; j < chromosome.size(); j++) {
                 sum += (chromosome.get(j) * Math.pow(points.get(i).key, j));
-                //System.out.println((chromosome.get(j) * Math.pow(points.get(i).key, j)));
             }
-            //System.out.println(Math.pow((sum - points.get(i).value),2));
             totalValue += Math.pow((sum - points.get(i).value),2);
-
         }
-
         return totalValue / numberOfPoints;
     }
 
@@ -118,6 +84,7 @@ public class SmoothCurveFitting {
     }
 
     public void DoCrossover(ArrayList<Double> chromosome1, ArrayList<Double> chromosome2) {
+       // System.out.println("here");
         int chromosomeLength = chromosome1.size();
         ArrayList<Double> offspring1, offspring2;
         offspring1 = chromosome1;
@@ -137,6 +104,7 @@ public class SmoothCurveFitting {
                    r3 = temp;
                 }
             }
+           // System.out.println("r2 " + r2 + "r3 " + r3);
             int i = 0;
             for(; i < r2; i++){
                 offspring1.add(chromosome1.get(i));
@@ -151,6 +119,7 @@ public class SmoothCurveFitting {
                 offspring2.add(chromosome2.get(i));
             }
         }
+        
         offSprings.add(new pair<>(offspring1, 1.0));
         offSprings.add(new pair<>(offspring2, 1.0));
     }
@@ -160,6 +129,7 @@ public class SmoothCurveFitting {
             for (int j = 0; j < offSprings.get(i).key.size(); j++) {
                 double r = rand.nextDouble();
                 if (r <= Pm) {
+                    
                     Double change = -1.0;
                     Double xOld = offSprings.get(i).key.get(j);
                     Double lower = xOld + 10;
@@ -200,6 +170,7 @@ public class SmoothCurveFitting {
             Double fitness = getFitness(chromosome);
             fitnessValues.add(new pair<>(chromosome, fitness));
         }
+
 
         while (turn < totalTurn) {
             elitism();

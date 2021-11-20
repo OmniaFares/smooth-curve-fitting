@@ -6,9 +6,9 @@ public class SmoothCurveFitting {
     int numberOfPoints;
     int degree;
     int turn = 0;
-    int totalTurn = 200;
-    final double Er = 0.2;
-    final double Pc = 0.7;
+    int totalTurn = 1000;
+    final double Er = 0.05;
+    final double Pc = 0.4;
     final double Pm = 0.1;
     int numberOfBest;
     int b = 5;
@@ -23,7 +23,6 @@ public class SmoothCurveFitting {
         this.degree = degree;
         this.points = points;
         rand = new Random();
-        //population = new Vector<>();
         fitnessValues = new Vector<>();
         selectedChromosomes = new Vector<>();
         offSprings = new Vector<>();
@@ -38,7 +37,7 @@ public class SmoothCurveFitting {
     }
 
     public int getPopulationSize() {
-        int N = numberOfPoints*7;
+        int N = numberOfPoints*10;
         return N;
     }
 
@@ -54,21 +53,6 @@ public class SmoothCurveFitting {
         return totalValue / numberOfPoints;
     }
 
-    public void DoSelection() {
-        TreeSet<Integer> temp = new TreeSet<Integer>();
-        Vector<pair<ArrayList<Double>, Double>> indexs = new Vector<>();
-        for(int i = 0; i < fitnessValues.size(); i++){
-            while (temp.size() != 3){
-                temp.add((int) (Math.random() * (fitnessValues.size()-1)));
-            }
-            while (temp.size() != 0){
-                int location = temp.pollFirst();
-                indexs.add(new pair<>(fitnessValues.get(location).key, fitnessValues.get(location).value));
-            }
-            selectedChromosomes.add(getMin(indexs).key);
-        }
-    }
-
     public pair<ArrayList<Double>,Double> getMin(Vector<pair<ArrayList<Double>, Double>> array) {
         ArrayList<Double> bestChromosome = array.get(0).key;
         Double fitnessValue = array.get(0).value;
@@ -81,108 +65,6 @@ public class SmoothCurveFitting {
         }
 
         return new pair<>(bestChromosome,fitnessValue);
-    }
-
-    public void DoCrossover(ArrayList<Double> chromosome1, ArrayList<Double> chromosome2) {
-       // System.out.println("here");
-        int chromosomeLength = chromosome1.size();
-        ArrayList<Double> offspring1, offspring2;
-        offspring1 = chromosome1;
-        offspring2 = chromosome2;
-
-        double r1 = rand.nextDouble();
-        if (r1 <= Pc) {
-            offspring1 = new ArrayList<>();
-            offspring2 = new ArrayList<>();
-            int r2 = -1,r3 = -1;
-            while ( r2 == r3){
-                r2 = (int) Math.floor(Math.random() * ((chromosomeLength - 1)) + 1);
-                r3 = (int) Math.floor(Math.random() * ((chromosomeLength - 1)) + 1);
-                if(r3 < r2){
-                   int temp = r2;
-                   r2 = r3;
-                   r3 = temp;
-                }
-            }
-           // System.out.println("r2 " + r2 + "r3 " + r3);
-            int i = 0;
-            for(; i < r2; i++){
-                offspring1.add(chromosome1.get(i));
-                offspring2.add(chromosome2.get(i));
-            }
-            for(; i < r3; i++){
-                offspring1.add(chromosome2.get(i));
-                offspring2.add(chromosome1.get(i));
-            }
-            for(; i < chromosomeLength; i++){
-                offspring1.add(chromosome1.get(i));
-                offspring2.add(chromosome2.get(i));
-            }
-        }
-        
-        offSprings.add(new pair<>(offspring1, 1.0));
-        offSprings.add(new pair<>(offspring2, 1.0));
-    }
-
-    public void DoMutation() {
-        for (int i = numberOfBest; i < offSprings.size(); i++) {
-            for (int j = 0; j < offSprings.get(i).key.size(); j++) {
-                double r = rand.nextDouble();
-                if (r <= Pm) {
-                    
-                    Double change = -1.0;
-                    Double xOld = offSprings.get(i).key.get(j);
-                    Double lower = xOld + 10;
-                    Double upper = 10 - xOld;
-                    double r1 = rand.nextDouble();
-                    Double y = lower;
-                    if(r1 > 0.5){
-                        y = upper;
-                        change = 1.0;
-                    }
-
-                    double r2 = rand.nextDouble();
-
-                    change *= y * (1 - Math.pow(r2 , (Math.pow ((1 - turn/(double)totalTurn) , b))));
-
-                    offSprings.get(i).key.set(j ,xOld + change);
-                }
-            }
-            offSprings.get(i).value = getFitness(offSprings.get(i).key);
-        }
-    }
-
-    public void DoReplacement() {
-        fitnessValues.clear();
-        for (pair<ArrayList<Double>, Double> offSpring : offSprings) {
-            fitnessValues.add(new pair<>(offSpring.key, offSpring.value));
-        }
-        offSprings.clear();
-        selectedChromosomes.clear();
-    }
-
-    public void performGA() {
-        int popSize = getPopulationSize();
-        numberOfBest = (int)(popSize * Er);
-        numberOfBest = (numberOfBest % 2 == 0 ? numberOfBest : numberOfBest + 1);
-        while (fitnessValues.size() < popSize) {
-            ArrayList<Double> chromosome = generateChromosome();
-            Double fitness = getFitness(chromosome);
-            fitnessValues.add(new pair<>(chromosome, fitness));
-        }
-
-
-        while (turn < totalTurn) {
-            elitism();
-            DoSelection();
-            for (int i = 0; i < selectedChromosomes.size(); i += 2) {
-                DoCrossover(selectedChromosomes.get(i), selectedChromosomes.get(i + 1));
-            }
-            DoMutation();
-            DoReplacement();
-            turn++;
-        }
-        print(getMin(fitnessValues));
     }
 
     public void elitism(){
@@ -212,4 +94,132 @@ public class SmoothCurveFitting {
         System.out.println("Error = " + bestChromosome.value);
     }
 
+    public void DoSelection() {
+        Vector<Integer> temp = new Vector<Integer>();
+        Vector<pair<ArrayList<Double>, Double>> indexs = new Vector<>();
+        for(int i = 0; i < fitnessValues.size(); i++){
+            indexs.clear();
+            while (temp.size() != 10){
+                int v = (int) (Math.random() * (fitnessValues.size()-1));
+                temp.add(v);
+            }
+            while (temp.size() != 0){
+                int location = temp.get(0);
+                temp.remove(0);
+                indexs.add(new pair<>(fitnessValues.get(location).key, fitnessValues.get(location).value));
+            }
+            pair<ArrayList<Double>, Double> tp = getMin(indexs);
+            selectedChromosomes.add(tp.key);
+        }
+    }
+
+    public void DoCrossover(ArrayList<Double> chromosome1, ArrayList<Double> chromosome2) {
+        int chromosomeLength = chromosome1.size();
+        ArrayList<Double> offspring1, offspring2;
+        offspring1 = chromosome1;
+        offspring2 = chromosome2;
+
+        double r1 = rand.nextDouble();
+        if (r1 <= Pc) {
+            offspring1 = new ArrayList<>();
+            offspring2 = new ArrayList<>();
+            int r2 = -1,r3 = -1;
+            while ( r2 == r3){
+                r2 = (int) Math.floor(Math.random() * ((chromosomeLength - 1)) + 1);
+                r3 = (int) Math.floor(Math.random() * ((chromosomeLength - 1)) + 1);
+                if(r3 < r2){
+                   int temp = r2;
+                   r2 = r3;
+                   r3 = temp;
+                }
+            }
+            int i = 0;
+            for(; i < r2; i++){
+                offspring1.add(chromosome2.get(i));
+                offspring2.add(chromosome1.get(i));
+            }
+            for(; i < r3; i++){
+                offspring1.add(chromosome1.get(i));
+                offspring2.add(chromosome2.get(i));
+            }
+            for(; i < chromosomeLength; i++){
+                offspring1.add(chromosome2.get(i));
+                offspring2.add(chromosome1.get(i));
+            }
+        }
+
+        offSprings.add(new pair<>(offspring1, 1.0));
+        offSprings.add(new pair<>(offspring2, 1.0));
+    }
+
+    public void DoMutation() {
+        for (int i = numberOfBest; i < offSprings.size(); i++) {
+            for (int j = 0; j < offSprings.get(i).key.size(); j++) {
+                double r = rand.nextDouble();
+                if (r <= Pm) {
+                    Double change = -1.0;
+                    Double xOld = offSprings.get(i).key.get(j);
+                    Double lower = xOld + 10;
+                    Double upper = 10 - xOld;
+                    double r1 = rand.nextDouble();
+                    Double y = lower;
+                    if(r1 > 0.5){
+                        y = upper;
+                        change = 1.0;
+                    }
+
+                    double r2 = rand.nextDouble();
+
+                    change *= y * (1 - Math.pow(r2 , (Math.pow ((1 - turn/(double)totalTurn) , b))));
+
+                    offSprings.get(i).key.set(j ,xOld + change);
+                }
+            }
+            offSprings.get(i).value = getFitness(offSprings.get(i).key);
+        }
+    }
+
+    public void DoReplacement() {
+        fitnessValues.clear();
+        TreeSet<Double> population = new TreeSet<>();
+        for (pair<ArrayList<Double>, Double> offSpring : offSprings) {
+            //population.add(offSpring.value);
+            fitnessValues.add(new pair<>(offSpring.key, offSpring.value));
+        }
+        //System.out.println(population.first());
+        //System.out.println(population.last());
+        offSprings.clear();
+        selectedChromosomes.clear();
+    }
+
+    public void performGA() {
+        int popSize = getPopulationSize();
+        numberOfBest = (int)(popSize * Er);
+        numberOfBest = (numberOfBest % 2 == 0 ? numberOfBest : numberOfBest + 1);
+        HashSet<ArrayList<Double>> population1 = new HashSet<>();
+        while (population1.size() < popSize) {
+            ArrayList<Double> chromosome = generateChromosome();
+            if(population1.contains(chromosome)){
+                continue;
+            }
+            population1.add(chromosome);
+            Double fitness = getFitness(chromosome);
+            fitnessValues.add(new pair<>(chromosome, fitness));
+        }
+
+
+        while (turn < totalTurn) {
+            elitism();
+            DoSelection();
+            for (int i = 0; i < selectedChromosomes.size(); i += 2) {
+               // DoCrossover(selectedChromosomes.get(i), selectedChromosomes.get(i + 1));
+                offSprings.add(new pair<>(selectedChromosomes.get(i),1.0));
+                offSprings.add(new pair<>(selectedChromosomes.get(i+1),1.0));
+            }
+            DoMutation();
+            DoReplacement();
+            turn++;
+        }
+        print(getMin(fitnessValues));
+    }
 }

@@ -1,6 +1,7 @@
 package com.company;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
@@ -200,28 +201,35 @@ public class SmoothCurveFitting {
             generation = newGeneration; // replacement
             turn++;
         }
-        print(getMin(generation));
+        Vector<String> Chromosomes = new Vector<>();
+        Chromosomes.add(print(getMin(generation)));
+        writeOutput(Chromosomes);
     }
 
-    public void print(pair<ArrayList<Double>, Double> bestChromosome) throws IOException {
+    public String print(pair<ArrayList<Double>, Double> bestChromosome) throws IOException {
+        String bestOne = "";
         for (Double coefficient : bestChromosome.key) {
             System.out.print(coefficient + " , ");
+            bestOne += coefficient + ", ";
         }
         System.out.println("Error = " + bestChromosome.value);
+        bestOne += "Error = " + bestChromosome.value;
 
-        writeOutput(bestChromosome);
+        return bestOne;
+
     }
 
-    public void writeOutput( pair<ArrayList<Double>, Double> bestChromosome) throws IOException
+    public void writeOutput( Vector<String> Chromosomes) throws IOException
     {
+        File file = new File("output.txt");
+        file.createNewFile();
         BufferedWriter writer = new BufferedWriter(new FileWriter("output.txt", true));
-        for (Double coefficient : bestChromosome.key)
-        {
-            writer.append("[" + coefficient + ", ");
-        }
-        writer.append("]Error = " + bestChromosome.value);
-        writer.append('\n');
 
+        for (String Chromosome : Chromosomes)
+        {
+            writer.write(Chromosome + "\n");
+        }
+        writer.flush();
         writer.close();
     }
 }

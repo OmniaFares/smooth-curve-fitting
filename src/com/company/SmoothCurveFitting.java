@@ -1,5 +1,8 @@
 package com.company;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class SmoothCurveFitting {
@@ -80,13 +83,6 @@ public class SmoothCurveFitting {
             array.remove(0);
         }
         return bestChromosomes;
-    }
-
-    public void print(pair<ArrayList<Double>, Double> bestChromosome) {
-        for (Double coefficient : bestChromosome.key) {
-            System.out.print(coefficient + " , ");
-        }
-        System.out.println("Error = " + bestChromosome.value);
     }
 
     public Vector<ArrayList<Double>> DoSelection(Vector<pair<ArrayList<Double>, Double>> array) {
@@ -176,7 +172,7 @@ public class SmoothCurveFitting {
         return newChromosomes;
     }
 
-    public void performGA() {
+    public void performGA() throws IOException {
         Vector<pair<ArrayList<Double>, Double>> generation = new Vector<>();
         int popSize = getPopulationSize();
         numberOfBest = (int) (popSize * Er);
@@ -189,8 +185,6 @@ public class SmoothCurveFitting {
                 generation.add(new pair<>(chromosome, getFitness(chromosome)));
             }
         }
-
-
         while (turn < totalTurn) {
             Vector<ArrayList<Double>> offSprings = new Vector<>();
             Vector<pair<ArrayList<Double>, Double>> newGeneration = elitism(generation);
@@ -207,5 +201,27 @@ public class SmoothCurveFitting {
             turn++;
         }
         print(getMin(generation));
+    }
+
+    public void print(pair<ArrayList<Double>, Double> bestChromosome) throws IOException {
+        for (Double coefficient : bestChromosome.key) {
+            System.out.print(coefficient + " , ");
+        }
+        System.out.println("Error = " + bestChromosome.value);
+
+        writeOutput(bestChromosome);
+    }
+
+    public void writeOutput( pair<ArrayList<Double>, Double> bestChromosome) throws IOException
+    {
+        BufferedWriter writer = new BufferedWriter(new FileWriter("output.txt", true));
+        for (Double coefficient : bestChromosome.key)
+        {
+            writer.append("[" + coefficient + ", ");
+        }
+        writer.append("]Error = " + bestChromosome.value);
+        writer.append('\n');
+
+        writer.close();
     }
 }

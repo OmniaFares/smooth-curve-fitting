@@ -2,6 +2,7 @@ package com.company;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Scanner;
 import java.util.Vector;
 
@@ -12,7 +13,7 @@ public class files {
     Vector<pair<Double, Double>> pairs = new Vector<>();
     SmoothCurveFitting testcase;
 
-    public void read() throws FileNotFoundException {
+    public void read() throws IOException {
         File inputFile = new File("input-2.txt");
         Scanner reader = new Scanner(inputFile);
         numberOfTestcases = reader.nextInt();

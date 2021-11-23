@@ -1,8 +1,6 @@
 package com.company;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.Scanner;
 import java.util.Vector;
 
@@ -15,6 +13,7 @@ public class files {
 
     public void read() throws IOException {
         File inputFile = new File("input-2.txt");
+        StringBuilder allBest = new StringBuilder();
         Scanner reader = new Scanner(inputFile);
         numberOfTestcases = reader.nextInt();
         for (int i = 0; i < numberOfTestcases; i++) {
@@ -25,9 +24,19 @@ public class files {
             }
 
             testcase = new SmoothCurveFitting(numberOfPoints, degree, pairs);
-            testcase.performGA();
+            String bestOfTestcase = testcase.performGA();
+            allBest.append(bestOfTestcase).append("\n");
             pairs.clear();
         }
+        writeOutput(allBest.toString());
         reader.close();
+    }
+
+    public void writeOutput(String Chromosomes) throws IOException
+    {
+        BufferedWriter writer = new BufferedWriter(new FileWriter("output.txt"));
+        writer.write(Chromosomes);
+        writer.flush();
+        writer.close();
     }
 }

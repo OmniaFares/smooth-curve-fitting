@@ -18,6 +18,8 @@ public class SmoothCurveFitting {
     double b = 5;
     Random rand;
     Vector<pair<Double, Double>> points;
+    StringBuilder all = new StringBuilder();
+
 
     public SmoothCurveFitting(int numberOfPoints, int degree, Vector<pair<Double, Double>> points) {
         this.numberOfPoints = numberOfPoints;
@@ -173,7 +175,7 @@ public class SmoothCurveFitting {
         return newChromosomes;
     }
 
-    public void performGA() throws IOException {
+    public String performGA() throws IOException {
         Vector<pair<ArrayList<Double>, Double>> generation = new Vector<>();
         int popSize = getPopulationSize();
         numberOfBest = (int) (popSize * Er);
@@ -201,9 +203,7 @@ public class SmoothCurveFitting {
             generation = newGeneration; // replacement
             turn++;
         }
-        Vector<String> Chromosomes = new Vector<>();
-        Chromosomes.add(print(getMin(generation)));
-        writeOutput(Chromosomes);
+        return print(getMin(generation));
     }
 
     public String print(pair<ArrayList<Double>, Double> bestChromosome) throws IOException {
@@ -219,17 +219,5 @@ public class SmoothCurveFitting {
 
     }
 
-    public void writeOutput( Vector<String> Chromosomes) throws IOException
-    {
-        File file = new File("output.txt");
-        file.createNewFile();
-        BufferedWriter writer = new BufferedWriter(new FileWriter("output.txt", true));
 
-        for (String Chromosome : Chromosomes)
-        {
-            writer.write(Chromosome + "\n");
-        }
-        writer.flush();
-        writer.close();
-    }
 }
